@@ -1,0 +1,82 @@
+
+* Notes about implementation ideas.
+
+** System Interface  
+   There should be two interfaces to the system:
+    1. An operator interface, by means of configuration directives.    
+    2. A Programmer Interface, which aims to as natural an extention to CL as 
+       possible.
+   
+   The initial programmer interface is documented in the code block below.
+     
+    #+BEGIN_SRC lisp
+      
+         (define-schema stock-type-usd ()
+           ((symbol (string :length 4))
+	   (time int)
+	   (price-usd double)))
+
+         (define-schema stock-type-cad ()
+           ((symbol (string :length 4))
+	   (time int)
+	   (price-cad double)))
+
+         (define-schema stock-type-all ()
+           ((symbol (string :length 4))
+	   (time int)
+	   (price double)))
+
+         ;;(define-arrow <name> (<type>) (<name-of-arrow-whos-buffer-is-shared>))
+
+         (define-arrow stock-usd (stock-type-usd) ())
+	 (define-arrow stock-cad (stock-type-cad) ())
+	 (define-arrow stock-usd-large (stock-type-usd) ())
+	 (define-arrow stock-usd-small (stock-type-usd) ())
+	 (define-arrow stock-average (stock-type-usd) ())
+
+	 (define-box us-quote-to-canadian ; define-box names boxes
+	   (stream-map #'(lambda (tuple) ;stream-map returns an anonymous box
+	                   (make-tuple 'stock-type-cad
+				       :stock-type-cad-symbol (...)
+				       :stock-type-cad-time (...)
+				       :stock-type-cad-price-cad (...)))
+		       stock-usd ; input streams are listed first
+		       stock-cad)) ; output streams are listed last
+
+         (define-box filter-quotes
+           (stream-filter #'(lambda (tuple) ;stream-filter returns an anonymous box
+		              (> (stock-type-usd-price-usd tuple) 10))
+		          stock-usd ; input stream to filter
+		          stock-usd-large ; output stream if the tuple passes the filter
+		          stock-usd-small)) ; optional output stream if the filter drops the tuple.
+
+         (define-box moving-average
+           (stream-reduce #'(lambda (tuple-vector) ;stream-reduce returns an anonymous box
+		              (make-tuple 'stock-type-usd 
+				          ; the output tuples are generated for each symbol, we pick the 
+				          ; first in the vector we get as being representative of the whole.
+				          :stock-type-usd-symbol (stock-type-usd-symbol (aref tuple-vector 0))
+				          ; For the moving average, we choose the average of the input times 
+				          ; for the time slot of the output tuple.
+				          :stock-type-usd-time (/ (reduce #'+ (map 'vector 
+									            #'stock-type-usd-time 
+									            tuple-vector))
+							          (length tuple-vector))
+				          ; compute the average of the price of the input tuples.
+				          :stock-type-usd-price-usd (/ (reduce #'+ (map 'vector
+									                 #'stock-type-usd-price-usd
+									                 tuple-vector))
+							               (length tuple-vector))))
+		          stock-usd ; input stream
+		          stock-average ;output stream
+		          ; these keyword options are used to generate the tuple-vector suitable for the aggregation fn.
+			  :order-by :field ; we sort the input stream by a field, and not arrival order
+			  :order-on-field :stock-type-usd-time ; the input field we sort on
+			  :group-by :stock-type-usd-symbol ; we want to compute the moving average for each stock
+			  :window-size 1800 ; the window size in seconds
+			  :window-size-by :values ; the widow size is by values held in tuples, not the number of tuples
+			  :advance 900 ; advance the window by 900 seconds
+			  :slack 5 ; tolerate a max of 5 out of order tuples in the input
+			  :timeout 600)) ; close window if nothing is recieved 600 seconds
+
+    #+END_SRC
