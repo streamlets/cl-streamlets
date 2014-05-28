@@ -72,10 +72,12 @@
     								(length tuple-vector))))
     		   stock-usd ; input stream
     		   stock-average ;output stream
-    					; these keyword options are used to generate the tuple-vector suitable for the aggregation fn.
+    		   ;; these keyword options are used to generate the tuple-vector suitable for the aggregation fn.
     		   :order-by :field ; we sort the input stream by a field, and not arrival order
     		   :order-on-field :stock-type-usd-time ; the input field we sort on
-    		   :group-by :stock-type-usd-symbol ; we want to compute the moving average for each stock
+		   ;; To group tuples, we provide a function which is then applied to each tuple.
+		   ;; Its return value is used as the key to group by.
+    		   :group-by #'stock-type-usd-symbol ; we want to compute the moving average for each stock
     		   :window-size 1800 ; the window size in seconds
     		   :window-size-by :values ; the widow size is by values held in tuples, not the number of tuples
     		   :advance 900 ; advance the window by 900 seconds
