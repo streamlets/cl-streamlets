@@ -26,13 +26,16 @@
        (time int)
        (price double)))
     
-    ;;(define-arrow <name> (<type>) (<name-of-arrow-whos-buffer-is-shared>))
+    ;; Every box has one or more arrows as outputs. These arrows can feed
+    ;; into many downstream boxes, i.e, two boxes can have the same arrow as
+    ;; inputs. The downstream boxes keep track of how much data they've 
+    ;; consumed from the arrow. 
     
-    (define-arrow stock-usd (stock-type-usd) ())
-    (define-arrow stock-cad (stock-type-cad) ())
-    (define-arrow stock-usd-large (stock-type-usd) ())
-    (define-arrow stock-usd-small (stock-type-usd) ())
-    (define-arrow stock-average (stock-type-usd) ())
+    (define-arrow stock-usd :type :stock-type-usd :size 128) ; :size is optional
+    (define-arrow stock-cad :type :stock-type-cad :size 128)
+    (define-arrow stock-usd-large :type :stock-type-usd)
+    (define-arrow stock-usd-small :type stock-type-usd)
+    (define-arrow stock-average :type stock-type-usd)
     
     (define-box us-quote-to-canadian ; define-box names boxes
         (stream-map #'(lambda (tuple) ;stream-map returns an anonymous box
