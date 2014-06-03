@@ -10,7 +10,7 @@
    The initial programmer interface is documented in the code block below.
      
     #+BEGIN_SRC lisp
-      
+
     (define-schema stock-type-usd ()
       ((symbol (string :length 4))
        (time int)
@@ -34,67 +34,67 @@
     (define-arrow stock-usd :type :stock-type-usd :size 128) ; :size is optional
     (define-arrow stock-cad :type :stock-type-cad :size 128)
     (define-arrow stock-usd-large :type :stock-type-usd)
-    (define-arrow stock-usd-small :type stock-type-usd)
-    (define-arrow stock-average :type stock-type-usd)
+    (define-arrow stock-usd-small :type :stock-type-usd)
+    (define-arrow stock-average :type :stock-type-usd)
     
     ;; define-box creates and names boxes.
-    (define-box us-quote-to-canadian ((in stock-type-usd) (out stock-type cad))
-        (stream-map #'(lambda (tuple)
-    		        (make-tuple 'stock-type-cad
-    			            :stock-type-cad-symbol (...)
-    				    :stock-type-cad-time (...)
-    				    :stock-type-cad-price-cad (...)))
-    		    in ; input streams are listed first
-    		    out)) ; output streams are listed last
+    (define-box us-quote-to-canadian ((in stock-type-usd) (out stock-type-cad))
+      (stream-map #'(lambda (tuple)
+    		  (make-tuple 'stock-type-cad
+    			      :stock-type-cad-symbol (...)
+    			      :stock-type-cad-time (...)
+    			      :stock-type-cad-price-cad (...)))
+    	      in ; input streams are listed first
+    	      out)) ; output streams are listed last
     
     (define-box filter-quotes ((in stock-type-usd) (large stock-type-usd) (small stock-type-usd))
-        (stream-filter #'(lambda (tuple) 
-    		           (> (stock-type-usd-price-usd tuple) 10))
-    		       in ; input stream to filter
-    		       large ; output stream if the tuple passes the filter
-    		       small)) ; optional output stream if the filter drops the tuple.
+      (stream-filter #'(lambda (tuple) 
+    		     (> (stock-type-usd-price-usd tuple) 10))
+    		 in ; input stream to filter
+    		 large ; output stream if the tuple passes the filter
+    		 small)) ; optional output stream if the filter drops the tuple.
     
     (define-box moving-average ((in stock-type-usd) (out stock-type-usd))
-        (stream-reduce #'(lambda (tuple-vector) 
-    		           (make-tuple 'stock-type-usd 
-    				       ; the output tuples are generated for each symbol, we pick the 
-    				       ; first in the vector we get as being representative of the whole.
-    				       :stock-type-usd-symbol (stock-type-usd-symbol (aref tuple-vector 0))
-    				       ; For the moving average, we choose the average of the input times 
-    				       ; for the time slot of the output tuple.
-    				       :stock-type-usd-time (/ (reduce #'+ (map 'vector 
-    									        #'stock-type-usd-time 
-    									        tuple-vector))
-    							       (length tuple-vector))
-    				       ; compute the average of the price of the input tuples.
-    				       :stock-type-usd-price-usd (/ (reduce #'+ (map 'vector
-    										     #'stock-type-usd-price-usd
-    										     tuple-vector))
-    								    (length tuple-vector))))
-                       in ; input stream
-    		       out ;output stream
-    		       ;; these keyword options are used to specify the tuple-vector suitable for the aggregation fn.
-		       ;; Should these be part of the box definition?
-    		       :order-by :values ; we sort the input stream by tuple values, and not arrival order (:arrivals)
-		       ;; When order-by is :values, we'll need to provide a function that is applied to each
-		       ;; tuple, the return value of which is used to order tuples.
-    		       :order-on #'stock-type-usd-time ; Sort by the time slot in the tuple, ascending is default. 
-		       :order-predicate #'> ; order tuples in ascending order
-		       ;; To group tuples, we provide a function which is then applied to each tuple.
-		       ;; Its return value is used as the key to group by.
-    		       :group-by #'stock-type-usd-symbol ; we want to compute the moving average for each stock
-    		       :window-size 1800 ; the window size in seconds
-    		       :window-size-by :values ; the widow size is by values held in tuples, not the number of tuples
-    		       :advance 900 ; advance the window by 900 seconds
-    		       :slack 5 ; tolerate a max of 5 out of order tuples in the input
-    		       :timeout 600)) ; close window if nothing is recieved 600 seconds
+      (stream-reduce #'(lambda (tuple-vector) 
+    		     (make-tuple 'stock-type-usd 
+    					; the output tuples are generated for each symbol, we pick the 
+    					; first in the vector we get as being representative of the whole.
+    				 :stock-type-usd-symbol (stock-type-usd-symbol (aref tuple-vector 0))
+    					; For the moving average, we choose the average of the input times 
+    					; for the time slot of the output tuple.
+    				 :stock-type-usd-time (/ (reduce #'+ (map 'vector 
+    									  #'stock-type-usd-time 
+    									  tuple-vector))
+    							 (length tuple-vector))
+    					; compute the average of the price of the input tuples.
+    				 :stock-type-usd-price-usd (/ (reduce #'+ (map 'vector
+    									       #'stock-type-usd-price-usd
+    									       tuple-vector))
+    							      (length tuple-vector))))
+    		 in ; input stream
+    		 out ;output stream
+    		 ;; these keyword options are used to specify the tuple-vector suitable for the aggregation fn.
+    		 ;; Should these be part of the box definition?
+    		 :order-by :values ; we sort the input stream by tuple values, and not arrival order (:arrivals)
+    		 ;; When order-by is :values, we'll need to provide a function that is applied to each
+    		 ;; tuple, the return value of which is used to order tuples.
+    		 :order-on #'stock-type-usd-time ; Sort by the time slot in the tuple, ascending is default. 
+    		 :order-predicate #'> ; order tuples in ascending order
+    		 ;; To group tuples, we provide a function which is then applied to each tuple.
+    		 ;; Its return value is used as the key to group by.
+    		 :group-by #'stock-type-usd-symbol ; we want to compute the moving average for each stock
+    		 :window-size 1800 ; the window size in seconds
+    		 :window-size-by :values ; the widow size is by values held in tuples, not the number of tuples
+    		 :advance 900 ; advance the window by 900 seconds
+    		 :slack 5 ; tolerate a max of 5 out of order tuples in the input
+    		 :timeout 600)) ; close window if nothing is recieved 600 seconds
     
-    ;;; Connect boxes and arrows together to form the query diagram.
-    ;;; The d@, or "diagram apply" idea is from the Propagators Model by Alexey Radul and Gerald Jay Sussman.
-    ;;; Some examples
-
+       ;;; Connect boxes and arrows together to form the query diagram.
+       ;;; The d@, or "diagram apply" idea is from the Propagators Model by Alexey Radul and Gerald Jay Sussman.
+       ;;; Some examples
+    
     (d@ us-quote-to-canadian stock-usd stock-cad)
     (d@ filter-quotes stock-usd stock-usd-large stock-usd-small)
     (d@ moving-average stock-usd stock-average)
-    
+   
     #+END_SRC
