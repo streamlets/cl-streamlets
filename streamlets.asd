@@ -26,11 +26,16 @@
   :maintainer '("Varoun. P")
   :description "The Streamlets Stream Processing Engine."
   :long-description "The Streamlets Stream Processing Engine."
-  :depends-on (:alexandria)
+  :depends-on (:bordeaux-threads)
   :serial t
   :components 
     ((:module "packages"
 	      :serial t
 	      :pathname #p""
 	      :components  
-	        ((:file "packages")))))
+	        ((:file "packages")))
+     (:module "utilities"
+	      :serial t
+	      :pathname #p""
+	      :components
+	        ((:file "utilities")))))

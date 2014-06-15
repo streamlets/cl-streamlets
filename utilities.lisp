@@ -16,17 +16,17 @@
 ;;;;     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(in-package "CL-USER")
+(in-package "STREAMLETS-IMPL")
 
-;;;; Package declaration for Streamlets
+;;; Managing symbols.
 
-(defpackage streamlets
-  (:nicknames :streamlets)
-  (:use)
-  (:export))
+(defmacro with-gensyms ((&rest bindings) &body body)
+  `(let ,(mapcar #'(lambda (binding) `(,binding (gensym ,(string binding)))) 
+		 bindings)
+     ,@body))
 
-(defpackage streamlets-implementation
-  (:nicknames :streamlets-impl)
-  (:use :common-lisp :streamlets)
-  (:shadow)
-  (:export))
+(defun kintern (format-string &rest format-args)
+  "Interns a new symbol in the keyword package."
+  (declare (dynamic-extent format-args))
+  (intern (nstring-upcase (apply #'format nil format-string format-args))
+	  "KEYWORD"))
