@@ -16,33 +16,14 @@
 ;;;;     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(in-package "CL-USER")
+(in-package "STREAMLETS-IMPL")
 
-(asdf:defsystem :streamlets
-  :name "Streamlets"
-  :author "Varoun. P"
-  :version "0.0.1"
-  :licence "GNU AFFERO GENERAL PUBLIC LICENSE, Version 3"
-  :maintainer '("Varoun. P")
-  :description "The Streamlets Stream Processing Engine."
-  :long-description "The Streamlets Stream Processing Engine."
-  :depends-on (:bordeaux-threads)
-  :serial t
-  :components 
-    ((:module "packages"
-	      :serial t
-	      :pathname #p""
-	      :components  
-	        ((:file "packages")))
-     (:module "utilities"
-	      :serial t
-	      :pathname #p""
-	      :depends-on ("packages")
-	      :components
-	        ((:file "utilities")))
-     (:module "models"
-	      :serial t
-	      :pathname #p""
-	      :depends-on ("utilities")
-	      :components
-	        ((:file "tuples")))))
+;;;; The foundation class for all tuples.
+
+(defclass tuple ()
+  ((metrics 
+    :initarg :tuple-metrics 
+    :initform nil 
+    :accessor tuple-metrics
+    :documentation "A list of metrics relevant to tuple processing.")))
+
