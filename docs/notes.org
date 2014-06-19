@@ -11,17 +11,17 @@
      
     #+BEGIN_SRC lisp
 
-    (define-schema stock-type-usd ()
+    (define-tuple stock-type-usd ()
       ((symbol (string :length 4))
        (time int)
        (price-usd double)))
     
-    (define-schema stock-type-cad ()
+    (define-tuple stock-type-cad ()
       ((symbol (string :length 4))
        (time int)
        (price-cad double)))
     
-    (define-schema stock-type-all ()
+    (define-tuple stock-type-all ()
       ((symbol (string :length 4))
        (time int)
        (price double)))
