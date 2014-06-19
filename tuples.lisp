@@ -18,12 +18,12 @@
 
 (in-package "STREAMLETS-IMPL")
 
-;;;; The foundation class for all tuples.
+;;;; Streamlets Tuples
 
 (defclass tuple ()
   ((metrics 
     :initarg :tuple-metrics 
     :initform nil 
     :accessor tuple-metrics
-    :documentation "A list of metrics relevant to tuple processing.")))
-
+    :documentation "A list of metrics relevant to tuple processing."))
+  (:documentation "The foundation for all tuples."))
